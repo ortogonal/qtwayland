@@ -50,7 +50,10 @@
 
 #include <QtWaylandCompositor/qwaylandexport.h>
 #include <QtWaylandCompositor/qwaylandinputpanel.h>
+#include <QtWaylandCompositor/QWaylandSurface>
+#include <QtWaylandCompositor/QWaylandInputPanel>
 
+#include <QtWaylandCompositor/qwaylandclient.h>
 #include <QtWaylandCompositor/private/qwaylandextension_p.h>
 #include <QtWaylandCompositor/private/qwayland-server-input-method.h>
 
@@ -68,6 +71,7 @@ class Q_COMPOSITOR_EXPORT QWaylandInputPanelPrivate : public QWaylandExtensionTe
 {
     Q_DECLARE_PUBLIC(QWaylandInputPanel)
 public:
+    QWaylandInputPanelPrivate();
     QWaylandInputPanelPrivate(QWaylandCompositor *compositor);
     ~QWaylandInputPanelPrivate();
 

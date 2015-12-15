@@ -44,9 +44,25 @@
 
 QT_BEGIN_NAMESPACE
 
+QWaylandInputPanel::QWaylandInputPanel()
+    : QWaylandExtensionTemplate(*new QWaylandInputPanelPrivate())
+{
+}
+
 QWaylandInputPanel::QWaylandInputPanel(QWaylandCompositor *compositor)
     : QWaylandExtensionTemplate(compositor, *new QWaylandInputPanelPrivate(compositor))
 {
+}
+
+void QWaylandInputPanel::initialize()
+{
+    Q_D(QWaylandInputPanel);
+    QWaylandExtensionTemplate::initialize();
+    QWaylandCompositor* compositor = static_cast<QWaylandCompositor*>(extensionContainer());
+    if (!compositor) {
+        return;
+    }
+    d->init(compositor->display(), 1);
 }
 
 QWaylandSurface *QWaylandInputPanel::focus() const

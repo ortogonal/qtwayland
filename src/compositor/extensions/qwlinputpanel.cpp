@@ -38,12 +38,28 @@
 
 #include <QtWaylandCompositor/qwaylandinputpanel.h>
 #include <QtWaylandCompositor/QWaylandCompositor>
+#include <QtWaylandCompositor/qwaylandexport.h>
+
+#include <QtWaylandCompositor/QWaylandSurface>
+#include <QtWaylandCompositor>
 
 #include "qwlinputmethod_p.h"
 #include "qwlinputpanelsurface_p.h"
 #include "qwltextinput_p.h"
-
+#include "compositor_api/qwaylandclient.h"
+#include "compositor_api/qwaylandsurface.h"
+#include <QDebug>
 QT_BEGIN_NAMESPACE
+
+QWaylandInputPanelPrivate::QWaylandInputPanelPrivate()
+    : QWaylandExtensionTemplatePrivate()
+    , QtWaylandServer::wl_input_panel()
+    , m_compositor(NULL)
+    , m_focus()
+    , m_inputPanelVisible(false)
+    , m_cursorRectangle()
+{
+}
 
 QWaylandInputPanelPrivate::QWaylandInputPanelPrivate(QWaylandCompositor *compositor)
     : QWaylandExtensionTemplatePrivate()
@@ -122,9 +138,16 @@ QWaylandInputPanelPrivate *QWaylandInputPanelPrivate::findIn(QWaylandObject *con
     return panel->d_func();
 }
 
-void QWaylandInputPanelPrivate::input_panel_get_input_panel_surface(Resource *resource, uint32_t id, wl_resource *surface)
+void QWaylandInputPanelPrivate::input_panel_get_input_panel_surface(Resource *resource, uint32_t id, wl_resource *surface_res)
 {
-    new QtWayland::InputPanelSurface(resource->client(), id, QWaylandSurface::fromResource(surface));
+    qDebug() << Q_FUNC_INFO;
+
+    Q_Q(QWaylandInputPanel);
+    QWaylandSurface* surface = QWaylandSurface::fromResource(surface_res);
+    new QtWayland::InputPanelSurface(resource->client(), id, surface);
+    QWaylandCompositor *compositor = static_cast<QWaylandCompositor *>(q->extensionContainer());
+    emit q_func()->createShellSurface(surface, QWaylandClient::fromWlClient(compositor, resource->client()), id);
+
 }
 
 QT_END_NAMESPACE

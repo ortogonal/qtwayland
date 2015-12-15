@@ -39,6 +39,7 @@
 
 #include <QtWaylandCompositor/qwaylandexport.h>
 #include <QtWaylandCompositor/qwaylandextension.h>
+#include <QtWaylandCompositor/QWaylandSurface>
 
 #include <QObject>
 #include <QRect>
@@ -59,7 +60,10 @@ class Q_COMPOSITOR_EXPORT QWaylandInputPanel : public QWaylandExtensionTemplate<
     Q_PROPERTY(QRect cursorRectangle READ cursorRectangle NOTIFY cursorRectangleChanged)
 
 public:
+    QWaylandInputPanel();
     explicit QWaylandInputPanel(QWaylandCompositor *compositor);
+
+    void initialize() Q_DECL_OVERRIDE;
 
     QWaylandSurface *focus() const;
     bool visible() const;
@@ -71,6 +75,7 @@ Q_SIGNALS:
     void focusChanged();
     void visibleChanged();
     void cursorRectangleChanged();
+    void createShellSurface(QWaylandSurface *surface, QWaylandClient *client, uint id);
 };
 
 QT_END_NAMESPACE
