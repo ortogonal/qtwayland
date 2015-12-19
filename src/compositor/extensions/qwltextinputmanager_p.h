@@ -57,7 +57,7 @@ class QWaylandCompositor;
 
 namespace QtWayland {
 
-class TextInputManager : public QWaylandExtensionTemplate<TextInputManager>, public QtWaylandServer::wl_text_input_manager
+class Q_COMPOSITOR_EXPORT TextInputManager : public QWaylandExtensionTemplate<TextInputManager>, public QtWaylandServer::wl_text_input_manager
 {
     Q_OBJECT
 public:

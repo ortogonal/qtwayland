@@ -67,7 +67,7 @@ namespace QtWayland {
 class InputMethodContext;
 class TextInput;
 
-class InputMethod : public QWaylandExtensionTemplate<InputMethod> , public QtWaylandServer::wl_input_method
+class Q_COMPOSITOR_EXPORT InputMethod : public QWaylandExtensionTemplate<InputMethod> , public QtWaylandServer::wl_input_method
 {
     Q_OBJECT
 public:
