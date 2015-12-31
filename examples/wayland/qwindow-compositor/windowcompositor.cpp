@@ -182,8 +182,8 @@ void WindowCompositor::onSetPopup(QWaylandInputDevice *inputDevice, QWaylandSurf
     Q_UNUSED(inputDevice);
     QWaylandShellSurface *surface = qobject_cast<QWaylandShellSurface*>(sender());
     WindowCompositorView *view = findView(surface->surface());
-    m_popupViews << view;
     if (view) {
+        m_popupViews << view;
         raise(view);
         WindowCompositorView *parentView = findView(parent);
         if (parentView)
