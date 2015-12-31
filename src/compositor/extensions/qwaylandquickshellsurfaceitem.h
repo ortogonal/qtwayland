@@ -54,6 +54,7 @@ class Q_COMPOSITOR_EXPORT QWaylandQuickShellSurfaceItem : public QWaylandQuickIt
 
 public:
     QWaylandQuickShellSurfaceItem(QQuickItem *parent = 0);
+    virtual ~QWaylandQuickShellSurfaceItem();
 
     static QWaylandQuickShellSurfaceItemPrivate *get(QWaylandQuickShellSurfaceItem *item) { return item->d_func(); }
 
@@ -69,6 +70,9 @@ Q_SIGNALS:
 private Q_SLOTS:
     void handleStartMove(QWaylandInputDevice *inputDevice);
     void handleStartResize(QWaylandInputDevice *inputDevice, QWaylandShellSurface::ResizeEdge edges);
+    void handleSetPopup(QWaylandInputDevice *inputDevice, QWaylandSurface *parent, const QPoint &relativeToParent);
+    void handleShellSurfaceDestroyed();
+    void handleSurfaceMappedChanged();
     void adjustOffsetForNextFrame(const QPointF &offset);
 protected:
     QWaylandQuickShellSurfaceItem(QWaylandQuickShellSurfaceItemPrivate &dd, QQuickItem *parent);
@@ -79,6 +83,7 @@ protected:
     void surfaceChangedEvent(QWaylandSurface *newSurface, QWaylandSurface *oldSurface) Q_DECL_OVERRIDE;
 
     void componentComplete() Q_DECL_OVERRIDE;
+
 };
 
 QT_END_NAMESPACE

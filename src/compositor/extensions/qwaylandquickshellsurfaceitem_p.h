@@ -68,6 +68,8 @@ public:
         , grabberState(DefaultState)
     {}
 
+    void closePopups();
+
     QWaylandShellSurface *shellSurface;
     QQuickItem *moveItem;
 
@@ -85,6 +87,8 @@ public:
         QPointF initialMousePos;
         bool initialized;
     } resizeState;
+
+    static QList<QWaylandShellSurface*> popupshellSurfaces;
 };
 
 QT_END_NAMESPACE

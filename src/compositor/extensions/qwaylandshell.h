@@ -122,6 +122,8 @@ public:
     Q_INVOKABLE QSize sizeForResize(const QSizeF &size, const QPointF &delta, ResizeEdge edges);
     Q_INVOKABLE void sendConfigure(const QSize &size, ResizeEdge edges);
     Q_INVOKABLE void sendPopupDone();
+    void destroy();
+
 Q_SIGNALS:
     void surfaceChanged();
     void titleChanged();

@@ -90,7 +90,6 @@ void QWaylandShellSurfacePrivate::ping(uint32_t serial)
 void QWaylandShellSurfacePrivate::shell_surface_destroy_resource(Resource *)
 {
     Q_Q(QWaylandShellSurface);
-
     delete q;
 }
 
@@ -470,6 +469,15 @@ void QWaylandShellSurface::sendPopupDone()
 {
     Q_D(QWaylandShellSurface);
     d->send_popup_done();
+}
+
+/*!
+ * Make sure this shell surface resource are destroyed.
+ */
+void QWaylandShellSurface::destroy()
+{
+    Q_D(QWaylandShellSurface);
+    wl_resource_destroy(d->resource()->handle);
 }
 
 /*!
