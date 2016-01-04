@@ -53,6 +53,7 @@ CustomExtension::CustomExtension()
 void CustomExtension::initialize(QWaylandCompositor *compositor)
 {
     init(compositor->display(), 1);
+    QWaylandExtension::initialize();
 }
 
 void CustomExtension::sendEvent(QWaylandSurface *surface, uint time, const QString &text, uint value)
