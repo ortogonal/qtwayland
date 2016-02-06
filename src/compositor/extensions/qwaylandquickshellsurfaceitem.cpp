@@ -78,6 +78,13 @@ QWaylandQuickShellSurfaceItem::QWaylandQuickShellSurfaceItem(QWaylandQuickShellS
 {
 }
 
+QWaylandQuickShellSurfaceItem::~QWaylandQuickShellSurfaceItem() {
+    Q_D(QWaylandQuickShellSurfaceItem);
+    if (d->shellSurface) {
+        d->shellSurface->destroy();
+    }
+}
+
 /*!
  * \qmlproperty object QtWaylandCompositor::ShellSurfaceItem::shellSurface
  *
@@ -104,11 +111,15 @@ void QWaylandQuickShellSurfaceItem::setShellSurface(QWaylandShellSurface *shellS
     if (d->shellSurface) {
         disconnect(d->shellSurface, &QWaylandShellSurface::startMove, this, &QWaylandQuickShellSurfaceItem::handleStartMove);
         disconnect(d->shellSurface, &QWaylandShellSurface::startResize, this, &QWaylandQuickShellSurfaceItem::handleStartResize);
+        disconnect(d->shellSurface, &QWaylandShellSurface::setPopup, this, &QWaylandQuickShellSurfaceItem::handleSetPopup);
+        disconnect(d->shellSurface, &QWaylandShellSurface::destroyed, this, &QWaylandQuickShellSurfaceItem::handleShellSurfaceDestroyed);
     }
     d->shellSurface = shellSurface;
     if (d->shellSurface) {
         connect(d->shellSurface, &QWaylandShellSurface::startMove, this, &QWaylandQuickShellSurfaceItem::handleStartMove);
         connect(d->shellSurface, &QWaylandShellSurface::startResize, this, &QWaylandQuickShellSurfaceItem::handleStartResize);
+        connect(d->shellSurface, &QWaylandShellSurface::setPopup, this, &QWaylandQuickShellSurfaceItem::handleSetPopup);
+        connect(d->shellSurface, &QWaylandShellSurface::destroyed, this, &QWaylandQuickShellSurfaceItem::handleShellSurfaceDestroyed);
     }
     emit shellSurfaceChanged();
 }
@@ -156,6 +167,55 @@ void QWaylandQuickShellSurfaceItem::handleStartResize(QWaylandInputDevice *input
     d->resizeState.resizeEdges = edges;
     d->resizeState.initialSize = surface()->size();
     d->resizeState.initialized = false;
+}
+
+/*!
+ * \internal
+ */
+void QWaylandQuickShellSurfaceItem::handleSetPopup(QWaylandInputDevice *inputDevice, QWaylandSurface *parent, const QPoint &relativeToParent)
+{
+    Q_UNUSED(inputDevice);
+    Q_D(QWaylandQuickShellSurfaceItem);
+
+    QWaylandQuickShellSurfaceItem* parentItem = qobject_cast<QWaylandQuickShellSurfaceItem*>(parent->views().first()->renderObject());
+    if (parentItem) {
+        // Clear all the transforms for this ShellSurfaceItem. They are not
+        // applicable when the item becomes a child to a surface that has its
+        // own transforms. Otherwise the transforms would be applied twice.
+        QQmlListProperty<QQuickTransform> t = this->transform();
+        t.clear(&t);
+        this->setRotation(0);
+        this->setScale(1.0);
+        this->setX(relativeToParent.x());
+        this->setY(relativeToParent.y());
+        this->setParentItem(parentItem);
+
+        if (Q_LIKELY(this->view()) && Q_LIKELY(this->view()->output()) &&
+            Q_LIKELY(this->view()->output()->window()))
+        {
+            QWindow* wnd = this->view()->output()->window();
+            wnd->installEventFilter(parentItem);
+        }
+    }
+
+    if (!d->popupshellSurfaces.contains(this->shellSurface()))
+        d->popupshellSurfaces.append(this->shellSurface());
+}
+
+/*!
+ * \internal
+ */
+void QWaylandQuickShellSurfaceItem::handleShellSurfaceDestroyed() {
+    Q_D(QWaylandQuickShellSurfaceItem);
+    d->shellSurface = NULL;
+
+    if (Q_LIKELY(this->view()) && Q_LIKELY(this->view()->output()) &&
+        Q_LIKELY(this->view()->output()->window()))
+    {
+        QWindow* wnd = this->view()->output()->window();
+        wnd->removeEventFilter(this->parentItem());
+    }
+
 }
 
 /*!
@@ -236,6 +296,51 @@ void QWaylandQuickShellSurfaceItem::componentComplete()
         setShellSurface(new QWaylandShellSurface());
 
     QWaylandQuickItem::componentComplete();
+}
+
+QList<QWaylandShellSurface*> QWaylandQuickShellSurfaceItemPrivate::popupshellSurfaces;
+
+/*!
+ * \internal
+ */
+void QWaylandQuickShellSurfaceItemPrivate::closePopups()
+{
+    if (!popupshellSurfaces.isEmpty()) {
+        Q_FOREACH (QWaylandShellSurface* shellSurface, popupshellSurfaces) {
+            shellSurface->sendPopupDone();
+        }
+        popupshellSurfaces.clear();
+    }
+}
+
+bool QWaylandQuickShellSurfaceItem::eventFilter(QObject *obj, QEvent *event)
+{
+    Q_D(QWaylandQuickShellSurfaceItem);
+    if (event->type() == QEvent::MouseButtonPress && !d->popupsClosed) {
+        QMouseEvent *me = static_cast<QMouseEvent*>(event);
+        QPoint pnt = me->pos() - this->position().toPoint();
+
+        if (this->childAt(pnt.x(), pnt.y())) {
+            // If there is a child at this coordinate it means that we can
+            // remove the event filter and let the normal event handler handle
+            // this event.
+            obj->removeEventFilter(this);
+            return false;
+        } else {
+            // If there is no child at this coordina it means that the user
+            // clicked outside all the active popup surfaces. The popups should
+            // be closed, but the event filter will stay to chatch the release-
+            // event before removing it self.
+            d->popupsClosed = true;
+            d->closePopups();
+            return true;
+        }
+    } else if (event->type() == QEvent::MouseButtonRelease && d->popupsClosed) {
+        d->popupsClosed = false;
+        obj->removeEventFilter(this);
+        return true;
+    }
+    return QObject::eventFilter(obj, event);
 }
 
 QT_END_NAMESPACE
