@@ -46,6 +46,7 @@
 #include "qwaylanddnd_p.h"
 #include "qwaylandinputdevice_p.h"
 #include "qwaylanddisplay_p.h"
+#include "qwaylandabstractdecoration_p.h"
 
 #include <QtCore/QMimeData>
 #include <QtGui/QGuiApplication>
@@ -128,8 +129,6 @@ void QWaylandDataDevice::data_device_drop()
 {
     QDrag *drag = static_cast<QWaylandDrag *>(QGuiApplicationPrivate::platformIntegration()->drag())->currentDrag();
 
-    qDebug() << Q_FUNC_INFO << drag << m_dragOffer.data();
-
     QMimeData *dragData = 0;
     Qt::DropActions supportedActions;
     if (drag) {
@@ -153,7 +152,7 @@ void QWaylandDataDevice::data_device_enter(uint32_t serial, wl_surface *surface,
 {
     m_enterSerial = serial;
     m_dragWindow = QWaylandWindow::fromWlSurface(surface)->window();
-    m_dragPoint = QPoint(wl_fixed_to_int(x), wl_fixed_to_int(y));
+    m_dragPoint = calculateDragPosition(x, y, m_dragWindow);
 
     QDrag *drag = static_cast<QWaylandDrag *>(QGuiApplicationPrivate::platformIntegration()->drag())->currentDrag();
 
@@ -202,7 +201,7 @@ void QWaylandDataDevice::data_device_motion(uint32_t time, wl_fixed_t x, wl_fixe
     if (!drag && !m_dragOffer)
         return;
 
-    m_dragPoint = QPoint(wl_fixed_to_int(x), wl_fixed_to_int(y));
+    m_dragPoint = calculateDragPosition(x, y, m_dragWindow);
 
     QMimeData *dragData;
     Qt::DropActions supportedActions;
@@ -252,6 +251,19 @@ void QWaylandDataDevice::dragSourceCancelled()
 void QWaylandDataDevice::dragSourceTargetChanged(const QString &mimeType)
 {
     static_cast<QWaylandDrag *>(QGuiApplicationPrivate::platformIntegration()->drag())->updateTarget(mimeType);
+}
+
+QPoint QWaylandDataDevice::calculateDragPosition(int x, int y, QWindow *wnd) const
+{
+    QPoint pnt(wl_fixed_to_int(x), wl_fixed_to_int(y));
+    if (wnd) {
+        QWaylandWindow* wnd = static_cast<QWaylandWindow*>(m_dragWindow->handle());
+        if (wnd && wnd->decoration()) {
+            pnt -= QPoint(wnd->decoration()->margins().left(),
+                          wnd->decoration()->margins().top());
+        }
+    }
+    return pnt;
 }
 
 }

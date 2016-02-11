@@ -65,6 +65,9 @@ public:
     void setParentView(WindowCompositorView *parent) { m_parentView = parent; }
     WindowCompositorView *parentView() const { return m_parentView; }
     QPointF parentPosition() const { return m_parentView ? (m_parentView->position() + m_parentView->parentPosition()) : QPointF(); }
+    QPoint offset() const { return m_offset; }
+public slots:
+    void handleOffsetForNextFrame(const QPoint &offset);
 
 private:
     friend class WindowCompositor;
@@ -72,6 +75,7 @@ private:
     QPointF m_position;
     QWaylandShellSurface *m_shellSurface;
     WindowCompositorView *m_parentView;
+    QPoint m_offset;
 };
 
 class WindowCompositor : public QWaylandCompositor

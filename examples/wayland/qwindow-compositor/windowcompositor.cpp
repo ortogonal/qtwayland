@@ -68,6 +68,12 @@ bool WindowCompositorView::isCursor() const
     return surface()->isCursorSurface();
 }
 
+void WindowCompositorView::handleOffsetForNextFrame(const QPoint &offset)
+{
+    m_offset = offset;
+    this->setPosition(this->position() + offset);
+}
+
 WindowCompositor::WindowCompositor(QWindow *window)
     : QWaylandCompositor()
     , m_window(window)
@@ -97,7 +103,6 @@ void WindowCompositor::onSurfaceCreated(QWaylandSurface *surface)
     connect(surface, &QWaylandSurface::surfaceDestroyed, this, &WindowCompositor::surfaceDestroyed);
     connect(surface, &QWaylandSurface::mappedChanged, this, &WindowCompositor::surfaceMappedChanged);
     connect(surface, &QWaylandSurface::redraw, this, &WindowCompositor::triggerRender);
-    connect(surface, &QWaylandSurface::offsetForNextFrame, this, &WindowCompositor::frameOffset);
 
     connect(surface, &QWaylandSurface::subsurfacePositionChanged, this, &WindowCompositor::onSubsurfacePositionChanged);
 
@@ -105,6 +110,7 @@ void WindowCompositor::onSurfaceCreated(QWaylandSurface *surface)
     view->setSurface(surface);
     view->setOutput(outputFor(m_window));
     m_views << view;
+    connect(surface, &QWaylandSurface::offsetForNextFrame, view, &WindowCompositorView::handleOffsetForNextFrame);
     connect(view, &QWaylandView::surfaceDestroyed, this, &WindowCompositor::viewSurfaceDestroyed);
 }
 
@@ -300,6 +306,7 @@ void WindowCompositor::startDrag()
     QWaylandDrag *currentDrag = defaultInputDevice()->drag();
     Q_ASSERT(currentDrag);
     WindowCompositorView *iconView = findView(currentDrag->icon());
+    iconView->setPosition(m_window->mapFromGlobal(QCursor::pos()));
 
     emit dragStarted(iconView);
 }

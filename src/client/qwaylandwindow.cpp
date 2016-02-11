@@ -879,6 +879,11 @@ QVariant QWaylandWindow::property(const QString &name, const QVariant &defaultVa
     return m_properties.value(name, defaultValue);
 }
 
+void QWaylandWindow::addOffset(QPoint point)
+{
+    mOffset += point;
+}
+
 }
 
 QT_END_NAMESPACE

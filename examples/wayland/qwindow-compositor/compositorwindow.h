@@ -73,7 +73,6 @@ private slots:
     void startMove();
     void startResize(int edge);
     void startDrag(WindowCompositorView *dragIcon);
-    void setFrameOffset(const QPoint &offset);
 
 private:
     enum GrabState { NoGrab, MoveGrab, ResizeGrab, DragGrab };
